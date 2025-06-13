@@ -1,5 +1,44 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd"></mule>
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="62643f9e-ae05-4c82-8ce1-2553bd6aa188" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<flow name="va-curie-tech-pocFlow" doc:id="4c980f93-18b7-4562-a1c2-5c656cdff286" >
+		<http:listener doc:name="Listener" doc:id="1c5702d5-602c-48d7-b510-734adfe5483b" config-ref="HTTP_Listener_config" path="/test"/>
+		<ee:transform doc:name="Transform Message" doc:id="47a49e89-8851-457a-b6e4-f1d77a7dc70a" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<choice doc:name="Choice" doc:id="1295b78c-dacf-4ce1-81b2-a19e6af91888" >
+			<when expression='#[payload.accountType == "savings"]'>
+				<flow-ref doc:name="Flow Reference" doc:id="4a37b131-f087-4efc-a42c-7dde4189850f" name="va-curie-tech-pocSub_Flow"/>
+			</when>
+			<otherwise >
+				<logger level="INFO" doc:name="Logger" doc:id="d4968929-5ee7-473e-9dfb-9af7d8739031" message='#["Account is not savings account"]'/>
+			</otherwise>
+		</choice>
+	</flow>
+	<sub-flow name="va-curie-tech-pocSub_Flow" doc:id="ae304658-fe9f-4bad-8b7d-dbb2be17a75a" >
+		<ee:transform doc:name="Transform Message" doc:id="b5dff765-e475-4383-888d-66801008c9e4" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"accountNumber": payload.accountNumber,
+  "accountHolderName": upper(payload.accountHolderName),
+  "balance": payload.balance,
+  "accountType": payload.accountType }]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</sub-flow>
+</mule>
